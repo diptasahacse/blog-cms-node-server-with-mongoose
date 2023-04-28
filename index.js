@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const checkLogin = require("./middleware/checkLogin");
 require("dotenv").config();
 
 const app = express();
@@ -23,14 +24,6 @@ mongoose
   .catch((error) => {
     console.log(error);
   });
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
 
 require("./schema/userSchema");
 
@@ -59,29 +52,70 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
     const userExist = await User.findOne({ email });
-    if (!userExist) {
-      return res.send({ success: false, message: "User does not exist." });
-    }
+    if (userExist) {
+      const isValidPassword = await bcrypt.compare(
+        password,
+        userExist.password
+      );
+      if (isValidPassword) {
+        // generate token
+        const token = jwt.sign(
+          {
+            email: userExist.email,
+          },
+          process.env.JWT_ACCESS_TOKEN_SECRET,
+          { expiresIn: "1h" }
+        );
 
-    if (await bcrypt.compare(password, userExist.password)) {
-      const token = jwt.sign({}, process.env.JWT_ACCESS_TOKEN_SECRET);
-
-      if (res.status(201)) {
-        return res.json({ success: true, message: "Success", data: token });
+        if (res.status(201)) {
+          return res.json({ success: true, message: "Success", data: token });
+        } else {
+          return res.json({ success: false, message: "Unauthorize" });
+        }
       } else {
-        return res.json({ success: false, message: "Unauthorize" });
+        return res.send({ success: false, message: "Authentication failed!" });
       }
+    } else {
+      return res.send({ success: false, message: "Authentication failed!" });
     }
-
-    return res.json({ success: false, message: "Invalid password" });
   } catch (error) {
     res.send({ success: false, message: error.message });
   }
 });
 
+app.get("/users", checkLogin, async (req, res) => {
+  console.log(req.email);
+  try {
+    const users = await User.find({});
+    res.send({ success: true, data: users });
+  } catch (error) {
+    res.send({ success: false, message: error.message });
+  }
+});
 
+// Default error handler
+const errorHandler = (err, req, res, next) => {
+  console.log(res.headersSent)
+  if (res.headersSent) {
+    
+    return next(err);
+  }
+  res.send({
+    success: false,
+    message: err.message,
+  });
+};
 
+//
+app.use(errorHandler);
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
