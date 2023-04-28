@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const checkLogin = require("./middleware/checkLogin");
+const checkAdmin = require("./middleware/checkAdmin");
 require("dotenv").config();
 
 const app = express();
@@ -65,6 +66,7 @@ app.post("/login", async (req, res) => {
         const token = jwt.sign(
           {
             email: userExist.email,
+            // isAdmin: userExist.role === "admin",
           },
           process.env.JWT_ACCESS_TOKEN_SECRET,
           { expiresIn: "1h" }
@@ -86,8 +88,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/users", checkLogin, async (req, res) => {
-  // console.log(req.email);
+app.get("/users", checkLogin, checkAdmin, async (req, res) => {
   try {
     const users = await User.find({});
     res.send({ success: true, data: users });
@@ -101,7 +102,7 @@ const errorHandler = (err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
- 
+
   res.send({
     success: false,
     message: err,

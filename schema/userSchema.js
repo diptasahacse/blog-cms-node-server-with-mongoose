@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     phone: String,
     fullName: String,
     password: String,
+    role: String,
   },
   {
     collection: "UserInfo",
