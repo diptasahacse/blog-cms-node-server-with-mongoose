@@ -87,7 +87,7 @@ app.post("/login", async (req, res) => {
 });
 
 app.get("/users", checkLogin, async (req, res) => {
-  console.log(req.email);
+  // console.log(req.email);
   try {
     const users = await User.find({});
     res.send({ success: true, data: users });
@@ -98,14 +98,13 @@ app.get("/users", checkLogin, async (req, res) => {
 
 // Default error handler
 const errorHandler = (err, req, res, next) => {
-  console.log(res.headersSent)
   if (res.headersSent) {
-    
     return next(err);
   }
+ 
   res.send({
     success: false,
-    message: err.message,
+    message: err,
   });
 };
 

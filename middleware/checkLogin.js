@@ -4,11 +4,13 @@ const checkLogin = (req, res, next) => {
 
   try {
     const token = authorization.split(" ")[1];
+    
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
     const { email } = decoded;
     req.email = email;
     next();
-  } catch {
+  } catch(err) {
+    
     next("Authentication failed");
   }
 };
