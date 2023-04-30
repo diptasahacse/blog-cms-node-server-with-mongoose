@@ -73,7 +73,16 @@ app.post("/login", async (req, res) => {
         );
 
         if (res.status(201)) {
-          return res.json({ success: true, message: "Success", data: token });
+          return res.json({
+            success: true,
+            user: {
+              email: userExist.email,
+              fullName: userExist.fullName,
+              phone: userExist.phone,
+            },
+            message: "Success",
+            token,
+          });
         } else {
           return res.json({ success: false, message: "Unauthorize" });
         }
@@ -92,6 +101,20 @@ app.get("/users", checkLogin, checkAdmin, async (req, res) => {
   try {
     const users = await User.find({});
     res.send({ success: true, data: users });
+  } catch (error) {
+    res.send({ success: false, message: error.message });
+  }
+});
+app.get("/auth", async (req, res) => {
+  try {
+    res.send({ success: true });
+  } catch (error) {
+    res.send({ success: false, message: error.message });
+  }
+});
+app.get("/admin", checkAdmin, async (req, res) => {
+  try {
+    res.send({ success: true });
   } catch (error) {
     res.send({ success: false, message: error.message });
   }

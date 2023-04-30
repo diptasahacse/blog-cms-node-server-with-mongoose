@@ -8,7 +8,6 @@ const checkAdmin = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
     const { email } = decoded;
     const requesterInfo = await User.findOne({ email: email });
-    console.log(requesterInfo.role)
 
     if (requesterInfo.role === "admin") {
       next();
